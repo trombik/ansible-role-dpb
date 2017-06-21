@@ -1,0 +1,6 @@
+---
+
+- name: Restart dpb
+  service:
+    name: dpb
+    state: restarted

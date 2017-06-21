@@ -1,0 +1,8 @@
+dpb_user: dpb
+dpb_group: dpb
+dpb_log_dir: /var/log/dpb
+dpb_db_dir: "{{ __dpb_db_dir }}"
+dpb_service: dpb
+dpb_conf_dir: "{{ __dpb_conf_dir }}"
+dpb_conf_file: "{{ __dpb_conf_dir }}/dpb.conf"
+dpb_flags: ""

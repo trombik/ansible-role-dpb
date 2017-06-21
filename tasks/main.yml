@@ -1,0 +1,37 @@
+---
+# tasks file for ansible-role-dpb
+
+- include_vars: "{{ ansible_os_family }}.yml"
+
+- include: "install-{{ ansible_os_family }}.yml"
+
+- name: Create log directory
+  file:
+    path: "{{ dpb_log_dir }}"
+    mode: 0755
+    owner: "{{ dpb_user }}"
+    group: "{{ dpb_group }}"
+    state: directory
+  notify: Restart dpb
+
+- name: Create db directory
+  file:
+    path: "{{ dpb_db_dir }}"
+    mode: 0755
+    owner: "{{ dpb_user }}"
+    group: "{{ dpb_group }}"
+    state: directory
+  notify: Restart dpb
+
+- name: Create dpb.conf
+  template:
+    src: dpb.conf.j2
+    dest: "{{ dpb_conf_file }}"
+    validate: echo %s
+  notify: Restart dpb
+
+- name: Start dpb
+  service:
+    name: "{{ dpb_service }}"
+    enabled: true
+    state: started
