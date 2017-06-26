@@ -40,15 +40,6 @@
     creates: /usr/ports/Makefile
   register: register_ftp_o_tar_C_zxf
 
-- name: Add ssh key to known_hosts
-  known_hosts:
-    path: /etc/ssh/ssh_known_hosts
-    state: present
-    name: anoncvs.ca.openbsd.org
-    key: "{{ item }}"
-  with_file:
-    - files/anoncvs.ca.openbsd.org
-
 - name: Update ports tree
   # XXX the git repository, unofficially published at github.com, cannot be used
   # here because the repository does not have tags, but only HEAD. HEAD can only
