@@ -3,35 +3,124 @@
 
 - include_vars: "{{ ansible_os_family }}.yml"
 
+- assert:
+    msg: dpb_cvsroot must not be empty
+    that:
+      - dpb_cvsroot is defined
+      - dpb_cvsroot | length > 0
+
+- name: Get release version
+  # XXX like any other facts, ansible_distribution_release has never been
+  # officially defined. its definition varies on platforms. the command below,
+  # taaken from the OpenBSD FAQ to get version is clear to everyone and will
+  # not break
+  command: uname -r
+  register: register_release_version
+  changed_when: false
+
+- set_fact:
+    dpb_release: "{{ register_release_version.stdout }}" # x.y
+
+- name: Get release in short form
+  shell: uname -r | cut -c 1,3
+  register: register_release_version_short
+  changed_when: false
+
+- set_fact:
+    dpb_release_short: "{{ register_release_version_short.stdout }}" # xy
+
+- name: Get architecture
+  command: uname -p
+  register: register_arch
+  changed_when: false
+
+- set_fact:
+    dpb_arch: "{{ register_arch.stdout }}"
+
+- set_fact:
+    dpb_cvs_tag_default: "OPENBSD_{{ dpb_release.split('.') | join('_') }}"
+
+- set_fact:
+    dpb_cvs_tag_merged: "{% if dpb_cvs_tag is defined and dpb_cvs_tag | length > 0 %}{{ dpb_cvs_tag }}{% else %}{{ dpb_cvs_tag_default }}{% endif %}"
+
+- assert:
+    msg: "[BUG] dpb_cvs_tag_merged is empty"
+    that:
+      - dpb_cvs_tag_merged is defined
+      - dpb_cvs_tag_merged | length > 0
+
+- set_fact:
+    dpb_cache_release_dir: "{{ dpb_cache_directory }}/{{ dpb_release }}"
+
+- set_fact:
+    dpb_cache_sets_dir: "{{ dpb_cache_release_dir }}/{{ dpb_arch }}"
+
 - include: "install-{{ ansible_os_family }}.yml"
 
-- name: Create log directory
-  file:
-    path: "{{ dpb_log_dir }}"
-    mode: 0755
-    owner: "{{ dpb_user }}"
-    group: "{{ dpb_group }}"
-    state: directory
-  notify: Restart dpb
+# Unset "nodev" mount(8) option if /usr/local is mounted with the option before
+# creating chroot because, inside of chroot, device nodes must be created.
+- name: Get mount option of /usr/local
+  command: "mount_option_of /usr/local"
+  register: register_mount_options
+  changed_when: false
 
-- name: Create db directory
-  file:
-    path: "{{ dpb_db_dir }}"
-    mode: 0755
-    owner: "{{ dpb_user }}"
-    group: "{{ dpb_group }}"
-    state: directory
-  notify: Restart dpb
+- set_fact:
+    # by default, fstab(5) uses disk UUID, instead of device name. to set mount
+    # option, disk UUID
+    dpb_mount_device_uuid: "{{ ansible_mounts | selectattr('mount', 'equalto', '/usr/local') | map(attribute='device') | first }}"
 
-- name: Create dpb.conf
+- name: Set options for /usr/local in fstab(5)
+  # XXX "state: mounted" does not work in OpenBSD. what the task does here is
+  # removing "nodev" option from fstab(5). the next "Re-mount" task applies the
+  # options.
+  # "Error mounting /usr/local: mount_ffs: -o remount: option not supported"
+  mount:
+    state: present
+    opts: "{{ register_mount_options.stdout.split(',') | reject('equalto', 'nodev') | join(',') }}"
+    name: /usr/local
+    fstype: ffs
+    src: "{{ dpb_mount_device_uuid }}"
+  register: mount_usr_local
+  when:
+    # run the task when /usr/local is mounted with "nodev"
+    - register_mount_options.stdout.find('nodev') >= 0
+
+- name: Re-mount /usr/local
+  # '-u' does not change options other than one specified with "-o". other
+  # options are left intact.
+  command: mount -u -o dev /usr/local
+  when:
+    - register_mount_options.stdout.find('nodev') >= 0
+
+- name: Get mount option of /usr/local
+  # get the options again to make sure /usr/local is mounted without "nodev"
+  command: "mount_option_of /usr/local"
+  register: register_mount_options
+  changed_when: false
+
+- assert:
+    # this time, /usr/local should be mounted without "nodev"
+    that:
+      - register_mount_options.stdout.find('nodev') < 0
+
+- name: Create dpb_conf_dir
+  file:
+    path: "{{ dpb_conf_dir }}"
+    state: directory
+
+- name: Create package list to build
   template:
-    src: dpb.conf.j2
+    src: packages.dpb.j2
     dest: "{{ dpb_conf_file }}"
-    validate: echo %s
-  notify: Restart dpb
 
-- name: Start dpb
-  service:
-    name: "{{ dpb_service }}"
-    enabled: true
-    state: started
+- name: Create proot.conf
+  template:
+    src: proot.conf.j2
+    dest: "{{ dpb_proot_conf_file }}"
+
+- name: Create chroot
+  command: "proot -c {{ dpb_proot_conf_file }}"
+  args:
+    creates: "{{ dpb_proot_chroot }}/usr/ports/Makefile"
+
+# dpb -P /etc/dpb/packages.dpb -B /usr/local/build

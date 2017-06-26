@@ -1,6 +1,0 @@
----
-
-- name: Install dpb
-  pkgng:
-    name: dpb
-    state: present

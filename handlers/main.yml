@@ -1,6 +1,10 @@
 ---
 
-- name: Restart dpb
-  service:
-    name: dpb
-    state: restarted
+- name: Update ports tree in host
+  command: cvs -qd {{ dpb_cvsroot }} get -r{{ dpb_cvs_tag_merged }} -P ports
+  args:
+    chdir: /usr
+  notify: Update chroot
+
+- name: Update chroot
+  command: "proot -c {{ dpb_proot_conf_file }}"

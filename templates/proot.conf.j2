@@ -1,0 +1,11 @@
+# Managed by ansible
+{% for k, v in dpb_proot_config | dictsort() %}
+{% if k == 'actions' %}
+{{ k }}=
+{% for i in v %}
+  {{ i }}
+{% endfor %}
+{% else %}
+{{ k }}={{ v }}
+{% endif %}
+{% endfor %}

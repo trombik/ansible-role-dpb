@@ -1,0 +1,115 @@
+---
+
+- name: Copy mount_option_of.py
+  copy:
+    src: mount_option_of.py
+    dest: /usr/local/bin/mount_option_of
+    mode: 0755
+
+- name: Create cache directory
+  file:
+    path: "{{ dpb_cache_release_dir }}"
+    state: directory
+
+- name: Create cache directory for sets
+  file:
+    path: "{{ dpb_cache_sets_dir }}"
+    state: directory
+
+- name: Fetch SHA256.sig for release
+  shell: "ftp {{ dpb_ftp_mirror_url_base }}{{ dpb_ftp_mirror_url_path }}/{{ dpb_release }}/SHA256.sig"
+  args:
+    chdir: "{{ dpb_cache_release_dir }}"
+    creates: "{{ dpb_cache_release_dir }}/SHA256.sig"
+
+- name: Fetch ports.tar.gz
+  shell: "ftp {{ dpb_ftp_mirror_url_base }}{{ dpb_ftp_mirror_url_path }}/{{ dpb_release }}/ports.tar.gz"
+  args:
+    chdir: "{{ dpb_cache_release_dir }}"
+    creates: "{{ dpb_cache_release_dir }}/ports.tar.gz"
+
+- name: Verify ports.tar.gz
+  command: "signify -C -p {{ dpb_signify_key_dir }}/openbsd-{{ dpb_release_short }}-base.pub -x SHA256.sig ports.tar.gz"
+  args:
+    chdir: "{{ dpb_cache_release_dir }}"
+  changed_when: false
+
+- name: Create ports directory
+  shell: tar -C /usr -zxf {{ dpb_cache_release_dir }}/ports.tar.gz
+  args:
+    creates: /usr/ports/Makefile
+  register: register_ftp_o_tar_C_zxf
+
+- name: Add ssh key to known_hosts
+  known_hosts:
+    path: /etc/ssh/ssh_known_hosts
+    state: present
+    name: anoncvs.ca.openbsd.org
+    key: "{{ item }}"
+  with_file:
+    - files/anoncvs.ca.openbsd.org
+
+- name: Update ports tree
+  # XXX the git repository, unofficially published at github.com, cannot be used
+  # here because the repository does not have tags, but only HEAD. HEAD can only
+  # be built on -current. To support git repository, one must convert a tagged
+  # CVS branch to a git branch, and tag it.
+  command: cvs -qd {{ dpb_cvsroot }} get -r{{ dpb_cvs_tag_merged }} -P ports
+  args:
+    chdir: /usr
+  when:
+    - register_ftp_o_tar_C_zxf.changed
+
+- name: Create symlink to dpb
+  file:
+    state: link
+    src: /usr/ports/infrastructure/bin/dpb
+    dest: /usr/local/bin/dpb
+
+- name: Create symlink to proot
+  file:
+    state: link
+    src: /usr/ports/infrastructure/bin/proot
+    dest: /usr/local/bin/proot
+
+# install X-related sets. without them, it is not possible to build packages
+# that depends on X, i.e. java
+- name: Fetch sets
+  shell: "ftp {{ dpb_ftp_mirror_url_base }}{{dpb_ftp_mirror_url_path }}/{{ dpb_release }}/{{ dpb_arch }}/{{ item }}{{ dpb_release_short }}.tgz"
+  args:
+    chdir: "{{ dpb_cache_sets_dir }}"
+    creates: "{{ dpb_cache_sets_dir }}/{{ item }}{{ dpb_release_short }}.tgz"
+  with_items: "{{ dpb_sets }}"
+
+- name: Fetch SHA256.sig
+  shell: "ftp {{ dpb_ftp_mirror_url_base }}{{dpb_ftp_mirror_url_path }}/{{ dpb_release }}/{{ dpb_arch }}/SHA256.sig"
+  args:
+    chdir: "{{ dpb_cache_sets_dir }}"
+    creates: "{{ dpb_cache_sets_dir }}/SHA256.sig"
+
+- name: Verify sets
+  command: "signify -C -p {{ dpb_signify_key_dir }}/openbsd-{{ dpb_release_short }}-base.pub -x SHA256.sig {{ item }}{{ dpb_release_short }}.tgz"
+  args:
+    chdir: "{{ dpb_cache_sets_dir }}"
+  changed_when: false
+  with_items: "{{ dpb_sets }}"
+
+- name: Extract comp
+  command: "tar -C / -xzf {{ dpb_cache_sets_dir }}/comp{{ dpb_release_short }}.tgz"
+  args:
+    creates: /usr/bin/cc
+
+- name: Extract xbase
+  command: "tar -C / -xzf {{ dpb_cache_sets_dir }}/xbase{{ dpb_release_short }}.tgz"
+  args:
+    creates: /usr/X11R6/bin/xdm
+
+- name: Extract xfont
+  command: "tar -C / -xzf {{ dpb_cache_sets_dir }}/xfont{{ dpb_release_short }}.tgz"
+  args:
+    creates: /usr/X11R6/lib/X11/fonts/TTF/DejaVuSansMono.ttf
+
+- name: Extract xshare
+  command: "tar -C / -xzf {{ dpb_cache_sets_dir }}/xshare{{ dpb_release_short }}.tgz"
+  args:
+    creates: /usr/X11R6/bin/startx
