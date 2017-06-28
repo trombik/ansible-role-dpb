@@ -16,7 +16,7 @@ dpb_signify_key_dir: /etc/signify
 dpb_cvsroot: ""
 dpb_cvs_tag: ""
 dpb_proot_conf_file: "{{ dpb_conf_dir }}/proot.conf"
-dpb_proot_chroot: /usr/local/build
+dpb_proot_chroot: ""
 
 dpb_proot_config:
   chroot: "{{ dpb_proot_chroot }}"
@@ -27,3 +27,4 @@ dpb_proot_config:
     - unpopulate_light
     - resolve
     - copy_ports
+dpb_remove_nodev_mount_option: no

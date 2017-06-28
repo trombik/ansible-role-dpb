@@ -1,0 +1,61 @@
+---
+
+- name: Get mount point of dpb_proot_chroot
+  shell: "df -P {{ dpb_proot_chroot | quote }} | tail -n1 | awk '{ print $6 }'"
+  changed_when: false
+  register: register_proot_mount_point
+
+- set_fact:
+    proot_mount_point: "{{ register_proot_mount_point.stdout }}"
+
+- assert:
+    msg: "[BUG] proot_mount_point: is empty"
+    that:
+      - proot_mount_point is defined
+      - proot_mount_point | length > 0
+
+# Unset "nodev" mount(8) option if proot_mount_point is mounted with the option before
+# creating chroot because, inside of chroot, device nodes must be created.
+- name: Get mount option of proot_mount_point
+  command: "mount_option_of {{ proot_mount_point | quote }}"
+  register: register_mount_options
+  changed_when: false
+
+- set_fact:
+    # by default, fstab(5) uses disk UUID, instead of device name. to set mount
+    # option, disk UUID
+    dpb_mount_device_uuid: "{{ ansible_mounts | selectattr('mount', 'equalto', proot_mount_point) | map(attribute='device') | first }}"
+
+- name: Set options for proot_mount_point in fstab(5)
+  # XXX "state: mounted" does not work in OpenBSD. what the task does here is
+  # removing "nodev" option from fstab(5). the next "Re-mount" task applies the
+  # options.
+  # "Error mounting proot_mount_point: mount_ffs: -o remount: option not supported"
+  mount:
+    state: present
+    opts: "{{ register_mount_options.stdout.split(',') | reject('equalto', 'nodev') | join(',') }}"
+    name: "{{ proot_mount_point }}"
+    fstype: ffs
+    src: "{{ dpb_mount_device_uuid }}"
+  register: mount_usr_local
+  when:
+    # run the task when proot_mount_point is mounted with "nodev"
+    - register_mount_options.stdout.find('nodev') >= 0
+
+- name: Mount proot_mount_point with updated mount options
+  # '-u' does not change options other than one specified with "-o". other
+  # options are left intact.
+  command: "mount -u -o dev {{ proot_mount_point | quote }}"
+  when:
+    - register_mount_options.stdout.find('nodev') >= 0
+
+- name: Get mount option of proot_mount_point
+  # get the options again to make sure proot_mount_point is mounted without "nodev"
+  command: "mount_option_of {{ proot_mount_point | quote }}"
+  register: register_mount_options
+  changed_when: false
+
+- assert:
+    # this time, proot_mount_point should be mounted without "nodev"
+    that:
+      - register_mount_options.stdout.find('nodev') < 0

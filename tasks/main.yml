@@ -9,6 +9,12 @@
       - dpb_cvsroot is defined
       - dpb_cvsroot | length > 0
 
+- assert:
+    msg: dpb_proot_chroot must not be empty
+    that:
+      - dpb_proot_chroot is defined
+      - dpb_proot_chroot | length > 0
+
 - name: Get release version
   # XXX like any other facts, ansible_distribution_release has never been
   # officially defined. its definition varies on platforms. the command below,
@@ -57,51 +63,14 @@
 
 - include: "install-{{ ansible_os_family }}.yml"
 
-# Unset "nodev" mount(8) option if /usr/local is mounted with the option before
-# creating chroot because, inside of chroot, device nodes must be created.
-- name: Get mount option of /usr/local
-  command: "mount_option_of /usr/local"
-  register: register_mount_options
-  changed_when: false
+- name: Create dpb_proot_chroot
+  file:
+    path: "{{ dpb_proot_chroot }}"
+    state: directory
 
-- set_fact:
-    # by default, fstab(5) uses disk UUID, instead of device name. to set mount
-    # option, disk UUID
-    dpb_mount_device_uuid: "{{ ansible_mounts | selectattr('mount', 'equalto', '/usr/local') | map(attribute='device') | first }}"
-
-- name: Set options for /usr/local in fstab(5)
-  # XXX "state: mounted" does not work in OpenBSD. what the task does here is
-  # removing "nodev" option from fstab(5). the next "Re-mount" task applies the
-  # options.
-  # "Error mounting /usr/local: mount_ffs: -o remount: option not supported"
-  mount:
-    state: present
-    opts: "{{ register_mount_options.stdout.split(',') | reject('equalto', 'nodev') | join(',') }}"
-    name: /usr/local
-    fstype: ffs
-    src: "{{ dpb_mount_device_uuid }}"
-  register: mount_usr_local
+- include: "remove_nodev.yml"
   when:
-    # run the task when /usr/local is mounted with "nodev"
-    - register_mount_options.stdout.find('nodev') >= 0
-
-- name: Re-mount /usr/local
-  # '-u' does not change options other than one specified with "-o". other
-  # options are left intact.
-  command: mount -u -o dev /usr/local
-  when:
-    - register_mount_options.stdout.find('nodev') >= 0
-
-- name: Get mount option of /usr/local
-  # get the options again to make sure /usr/local is mounted without "nodev"
-  command: "mount_option_of /usr/local"
-  register: register_mount_options
-  changed_when: false
-
-- assert:
-    # this time, /usr/local should be mounted without "nodev"
-    that:
-      - register_mount_options.stdout.find('nodev') < 0
+    - dpb_remove_nodev_mount_option
 
 - name: Create dpb_conf_dir
   file:
