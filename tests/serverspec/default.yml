@@ -13,6 +13,28 @@
       - net/rsync
       - sysutils/ansible
       - net/curl
+    dpb_proot_config:
+      chroot: "{{ dpb_proot_chroot }}"
+      BUILD_USER: "{{ dpb_build_user }}"
+      FETCH_USER: "{{ dpb_fetch_user }}"
+      chown_all: 1
+      actions:
+        - unpopulate_light
+        - resolve
+        - copy_ports
+      # XXX when `mkconf_lines` contains something, `proot` should create
+      # `mk.conf`, but it does not. it does when:
+      #
+      # * "some directory values are different from the default"
+      # * or `mkconf_tail` is not empty
+      #
+      # set `mkconf_tail` here to ensure `mk.conf` is always created. if one of
+      # attributes related to `mk.conf`, such as `PORTSDIR`, is different from
+      # the defaults, `mkconf_tail` can be removed.
+      mkconf_tail: /dev/null
+      mkconf_lines:
+        - FETCH_CMD = /usr/bin/ftp -E
+        - FETCH_CMD = /usr/bin/ftp -E
     # XXX this is not recommended but the box does not have additional
     # partition.
     dpb_remove_nodev_mount_option: yes

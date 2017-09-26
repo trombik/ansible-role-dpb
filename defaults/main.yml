@@ -27,4 +27,5 @@ dpb_proot_config:
     - unpopulate_light
     - resolve
     - copy_ports
+  mkconf_tail: /dev/null
 dpb_remove_nodev_mount_option: no

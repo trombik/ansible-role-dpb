@@ -5,6 +5,10 @@
 {% for i in v %}
   {{ i }}
 {% endfor %}
+{% elif k == 'mkconf_lines' %}
+{% for i in v %}
+{{ k }}={{ i }}
+{% endfor %}
 {% else %}
 {{ k }}={{ v }}
 {% endif %}

@@ -40,7 +40,11 @@ None
 This is a dict for `proot`. Each key is described in
 [`proot(1)`](http://man.openbsd.org/proot) man page.
 
-Values are string except `actions`. `actions` is a list of actions.
+Values are string except `actions` and `mkconf_lines`.
+
+`actions` is a list of actions.
+
+`mkconf_lines` is a list of lines to be added to `mk.conf` in `chroot`.
 
 ```yaml
 dpb_proot_config:
@@ -52,7 +56,13 @@ dpb_proot_config:
     - unpopulate_light
     - resolve
     - copy_ports
+  mkconf_tail: /dev/null
 ```
+
+Do not omit `mkconf_tail` when `mkconf_lines` is set. `proot` has a bug and
+`mk.conf` will not be created under certain conditions. See comments in Example
+Playbook. Set the variable to `/dev/null` even when you do not use it just in
+case.
 
 ## `dpb_proot_chroot` and `dpb_remove_nodev_mount_option`
 
@@ -88,6 +98,28 @@ None
       - net/rsync
       - sysutils/ansible
       - net/curl
+    dpb_proot_config:
+      chroot: "{{ dpb_proot_chroot }}"
+      BUILD_USER: "{{ dpb_build_user }}"
+      FETCH_USER: "{{ dpb_fetch_user }}"
+      chown_all: 1
+      actions:
+        - unpopulate_light
+        - resolve
+        - copy_ports
+      # XXX when `mkconf_lines` contains something, `proot` should create
+      # `mk.conf`, but it does not. it does when:
+      #
+      # * "some directory values are different from the default"
+      # * or `mkconf_tail` is not empty
+      #
+      # set `mkconf_tail` here to ensure `mk.conf` is always created. if one of
+      # attributes related to `mk.conf`, such as `PORTSDIR`, is different from
+      # the defaults, `mkconf_tail` can be removed.
+      mkconf_tail: /dev/null
+      mkconf_lines:
+        - FETCH_CMD = /usr/bin/ftp -E
+        - FETCH_CMD = /usr/bin/ftp -E
     # XXX this is not recommended but the box does not have additional
     # partition.
     dpb_remove_nodev_mount_option: yes

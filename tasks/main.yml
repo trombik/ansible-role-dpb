@@ -86,10 +86,5 @@
   template:
     src: proot.conf.j2
     dest: "{{ dpb_proot_conf_file }}"
-
-- name: Create chroot
-  command: "proot -c {{ dpb_proot_conf_file }}"
-  args:
-    creates: "{{ dpb_proot_chroot }}/usr/ports/Makefile"
-
-# dpb -P /etc/dpb/packages.dpb -B /usr/local/build
+  notify:
+    - Update chroot

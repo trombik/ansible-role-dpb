@@ -58,6 +58,15 @@ describe file(proot_config) do
   its(:content) { should match(/^FETCH_USER=#{fetch_user}$/) }
   its(:content) { should match(/^chown_all=1$/) }
   its(:content) { should match(/^actions=\s*\n\s+unpopulate_light\n\s+resolve\n\s+copy_ports\n/) }
+  its(:content) { should match(/^mkconf_lines=FETCH_CMD = #{Regexp.escape("/usr/bin/ftp -E")}\nmkconf_lines=FETCH_CMD = #{Regexp.escape("/usr/bin/ftp -E")}/) }
+end
+
+describe file("#{chroot_dir}/etc/mk.conf") do
+  it { should exist }
+  it { should be_file }
+  it { should be_owned_by "root" }
+  it { should be_grouped_into "wheel" }
+  its(:content) { should match(/^FETCH_CMD = #{Regexp.escape("/usr/bin/ftp -E")}\nFETCH_CMD = #{Regexp.escape("/usr/bin/ftp -E")}$/) }
 end
 
 describe file("/usr/local/bin/dpb") do
