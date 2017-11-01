@@ -93,7 +93,7 @@
 - name: Extract xbase
   command: "tar -C / -xzf {{ dpb_cache_sets_dir }}/xbase{{ dpb_release_short }}.tgz"
   args:
-    creates: /usr/X11R6/bin/xdm
+    creates: /usr/X11R6/README
 
 - name: Extract xfont
   command: "tar -C / -xzf {{ dpb_cache_sets_dir }}/xfont{{ dpb_release_short }}.tgz"

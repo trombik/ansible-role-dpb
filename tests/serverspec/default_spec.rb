@@ -133,16 +133,31 @@ end
 
 [
   "/usr/bin/cc",
-  "/usr/X11R6/bin/xdm",
-  "/usr/X11R6/lib/X11/fonts/TTF/DejaVuSansMono.ttf",
+  "/usr/X11R6/README",
   "/usr/X11R6/bin/startx"
 ].each do |f|
   describe file(f) do
     it { should exist }
     it { should be_file }
     it { should be_owned_by "root" }
-    it { should be_grouped_into f == "/usr/bin/cc" ? "bin" : "wheel" }
+    case release
+    when "6.0"
+      if f == "/usr/X11R6/bin/startx"
+        it { should be_grouped_into "wheel" }
+      else
+        it { should be_grouped_into "bin" }
+      end
+    else
+      it { should be_grouped_into "bin" }
+    end
   end
+end
+
+describe file("/usr/X11R6/lib/X11/fonts/TTF/DejaVuSansMono.ttf") do
+  it { should exist }
+  it { should be_file }
+  it { should be_owned_by "root" }
+  it { should be_grouped_into "wheel" }
 end
 
 ["", chroot_dir].each do |root|
@@ -177,17 +192,24 @@ describe file("/etc/ssh/ssh_known_hosts") do
   its(:content) { should match(/#{Regexp.escape("anoncvs.ca.openbsd.org")}\s+ssh-rsa\s+#{Regexp.escape("AAAAB3NzaC1yc2EAAAADAQABAAABAQCz6RLtgGksBp/0dH7M5vGCUxgD31+wX28tnLlij90+cYhjELDV3HX95DypEA7xfIN6W8Vg/GOJkX4Oot+zpQXNQx3VeOyMgcn4KXO83XYGsPVfJQijjzyI0r0/ztEsxYAE6JHEiEvY9floDnNRyoFLVETNE5oB9yBcDIt6W6BYjlpXqJNsEPy7ij+kBbEk7QT0FcyFidp7FmExsOQy23nhQ55A/6fB7ATsDQtz+snniF9ZJg5+b71SYzxfhUPkxJhmhBkx7NmPnRjy7eE0I7qrHODrHONIi1LWCo0joTIAfVgxhEn5SDbviTAINAecGgis5LQqXp0xSupfWuozZeXV")}/) }
 end
 
-[
-  "/usr/X11R6/bin/xdm",
-  "/usr/X11R6/lib/X11/fonts/TTF/DejaVuSansMono.ttf",
-  "/usr/X11R6/bin/startx"
-].each do |f|
-  describe file(f) do
-    # these are enough to test the chroot has been created
-    it { should exist }
-    it { should be_file }
-    it { should be_owned_by "root" }
+# `DejaVuSansMono.ttf` and `startx` are enough to test the chroot has been
+# created with xfont and xbase
+describe file("#{chroot_dir}/usr/X11R6/lib/X11/fonts/TTF/DejaVuSansMono.ttf") do
+  it { should exist }
+  it { should be_file }
+  it { should be_owned_by "root" }
+  it { should be_grouped_into "wheel" }
+end
+
+describe file("#{chroot_dir}/usr/X11R6/bin/startx") do
+  it { should exist }
+  it { should be_file }
+  it { should be_owned_by "root" }
+  case release
+  when "6.0"
     it { should be_grouped_into "wheel" }
+  else
+    it { should be_grouped_into "bin" }
   end
 end
 
