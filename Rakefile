@@ -13,7 +13,7 @@ task :test do
     rakefile = d + "Rakefile"
     if rakefile.exist? && rakefile.file?
       Dir.chdir(d) do
-        puts format("entering to %s", d)
+        puts format("entering to %<directory>s", directory: d)
         begin
           puts "running rake"
           sh "rake"
@@ -31,8 +31,9 @@ task :clean do
   integration_test_dirs.each do |d|
     rakefile = d + "Rakefile"
     next unless rakefile.exist? && rakefile.file?
+
     Dir.chdir(d) do
-      puts format("entering to %s", d)
+      puts format("entering to %<directory>s", directory: d)
       begin
         puts "running rake clean"
         sh "rake clean"
