@@ -14,7 +14,7 @@ for l in proc.stdout.readlines():
     fields = re.split(r"\s+", l)
     if fields[2] == path:
         options = re.sub(r"^.*\((.*)\)$", r"\1", l).replace(" ", "").split(",")
-        options.remove("local") # "local" is not really an option
+        options.remove("local")  # "local" is not really an option
         print ",".join(options).rstrip()
         exit(0)
 
