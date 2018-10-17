@@ -1,15 +1,15 @@
 ---
 galaxy_info:
+  role_name: dpb
   author: Tomoyuki Sakurai
   description: Creates `chroot` for bulk package build and configures `dpb` build environment
   company: N/A
   license: BSD
   min_ansible_version: 2.0
   platforms:
-  - name: OpenBSD
-    versions:
-    - 6.3
-
+    - name: OpenBSD
+      versions:
+        - 6.3
   galaxy_tags:
     - dpb
 dependencies: []
