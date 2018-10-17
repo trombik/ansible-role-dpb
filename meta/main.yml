@@ -2,7 +2,7 @@
 galaxy_info:
   author: Tomoyuki Sakurai
   description: Creates `chroot` for bulk package build and configures `dpb` build environment
-  company: Reallyenglish
+  company: N/A
   license: BSD
   min_ansible_version: 2.0
   platforms:
@@ -12,4 +12,4 @@ galaxy_info:
 
   galaxy_tags:
     - dpb
-dependencies:
+dependencies: []
