@@ -22,20 +22,20 @@
     chdir: "{{ dpb_cache_release_dir }}"
     creates: "{{ dpb_cache_release_dir }}/SHA256.sig"
 
-- name: Fetch ports.tar.gz
-  shell: "ftp {{ dpb_ftp_mirror_url_base }}{{ dpb_ftp_mirror_url_path }}/{{ dpb_release }}/ports.tar.gz"
+- name: Fetch dpb_ports_archive_file
+  shell: "ftp {{ dpb_ftp_mirror_url_base }}{{ dpb_ftp_mirror_url_path }}/{{ dpb_release }}/{{ dpb_ports_archive_file }}"
   args:
     chdir: "{{ dpb_cache_release_dir }}"
-    creates: "{{ dpb_cache_release_dir }}/ports.tar.gz"
+    creates: "{{ dpb_cache_release_dir }}/{{ dpb_ports_archive_file }}"
 
-- name: Verify ports.tar.gz
-  command: "signify -C -p {{ dpb_signify_key_dir }}/openbsd-{{ dpb_release_short }}-base.pub -x SHA256.sig ports.tar.gz"
+- name: Verify dpb_ports_archive_file
+  command: "signify -C -p {{ dpb_signify_key_dir }}/openbsd-{{ dpb_release_short }}-base.pub -x SHA256.sig {{ dpb_ports_archive_file }}"
   args:
     chdir: "{{ dpb_cache_release_dir }}"
   changed_when: false
 
 - name: Create ports directory
-  shell: tar -C /usr -zxf {{ dpb_cache_release_dir }}/ports.tar.gz
+  shell: tar -C /usr -zxf {{ dpb_cache_release_dir }}/{{ dpb_ports_archive_file }}
   args:
     creates: /usr/ports/Makefile
   register: register_ftp_o_tar_C_zxf

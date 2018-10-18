@@ -12,6 +12,7 @@ dpb_sets:
   - xshare
 dpb_ftp_mirror_url_base: http://ftp.openbsd.org
 dpb_ftp_mirror_url_path: /pub/OpenBSD
+dpb_ports_archive_file: ports.tgz
 dpb_signify_key_dir: /etc/signify
 dpb_cvsroot: ""
 dpb_cvs_tag: ""

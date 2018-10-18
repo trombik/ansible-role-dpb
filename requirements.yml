@@ -1,3 +1,4 @@
 ---
 
 - name: trombik.ssh
+- name: trombik.unarchive
