@@ -1,3 +1,8 @@
+## Release 1.0.2
+
+* dd5ca04 bugfix: add ansible.cfg
+* 6891dcd bugfix: introduce dpb_ports_archive_file, which defaults to `ports.tgz`
+
 ## Release 1.0.1
 
 * 4250c2f bugfix: fix indents
