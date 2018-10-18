@@ -13,6 +13,7 @@
       - net/rsync
       - sysutils/ansible
       - net/curl
+    dpb_ports_archive_file: "{% if ansible_distribution_version is version('6.3', '<=') %}ports.tar.gz{% else %}ports.tgz{% endif %}"
     dpb_proot_config:
       chroot: "{{ dpb_proot_chroot }}"
       BUILD_USER: "{{ dpb_build_user }}"
