@@ -35,8 +35,8 @@
 - set_fact:
     dpb_release_short: "{{ register_release_version_short.stdout }}" # xy
 
-- name: Get architecture
-  command: uname -p
+- name: Get machine processor architecture
+  command: uname -m
   register: register_arch
   changed_when: false
 
