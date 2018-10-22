@@ -27,7 +27,7 @@ None
 | `dpb_sets` | list of necessary sets | `["comp", "xbase", "xfont", "xshare"]` |
 | `dpb_ftp_mirror_url_base` | string of `scheme://` + `hostname` | `http://ftp.openbsd.org` |
 | `dpb_ftp_mirror_url_path` | path to the mirror root directory | `/pub/OpenBSD` |
-| `dpb_ports_archive_file` | base name of ports archive file (for 6.3 or older, set this to `ports.tar.gz`) | `ports.tgz` |
+| `dpb_ports_archive_file` | base name of ports archive file | `ports.tgz` |
 | `dpb_signify_key_dir` | path to directory where public keys are kept | `/etc/signify` |
 | `dpb_cvsroot` | mandatory `CVSROOT` string | `""` |
 | `dpb_cvs_tag` | optional CVS tag. when empty, appropriate default will be set (`OPENBSD_6_0` if the release version is 6.0) | `""` |
