@@ -1,8 +1,8 @@
 ---
 
-- name: Copy mount_option_of.py
+- name: Copy mount_option_of.sh
   copy:
-    src: mount_option_of.py
+    src: mount_option_of.sh
     dest: /usr/local/bin/mount_option_of
     mode: 0755
 
