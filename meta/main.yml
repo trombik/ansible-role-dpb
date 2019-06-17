@@ -9,8 +9,8 @@ galaxy_info:
   platforms:
     - name: OpenBSD
       versions:
-        - 6.3
         - 6.4
+        - 6.5
   galaxy_tags:
     - dpb
 dependencies: []
