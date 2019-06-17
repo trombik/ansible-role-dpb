@@ -25,7 +25,7 @@
   changed_when: false
 
 - set_fact:
-    dpb_release: "{{ register_release_version.stdout }}" # x.y
+    dpb_release: "{{ register_release_version.stdout }}"
 
 - name: Get release in short form
   shell: uname -r | cut -c 1,3
@@ -33,7 +33,7 @@
   changed_when: false
 
 - set_fact:
-    dpb_release_short: "{{ register_release_version_short.stdout }}" # xy
+    dpb_release_short: "{{ register_release_version_short.stdout }}"
 
 - name: Get machine processor architecture
   command: uname -m
