@@ -1,3 +1,18 @@
+## Release 1.1.0
+
+0b1a383 bugfix: QA
+bc2d476 bugfix: QA
+5d6a768 bugfix: QA
+85bd7a4 bugfix: QA
+8edee31 bugfix: QA
+f0b43fb bugfix: QA
+d294b70 bugfix: use shell version of mount_option_of
+770e917 bugfix: QA
+6493786 bugfix: update meta
+dd597dd bugfix: update README
+8eb00a9 feature: support 6.4
+b6ea996 bugfix: uname -m, not uname -p
+
 ## Release 1.0.2
 
 * dd5ca04 bugfix: add ansible.cfg
