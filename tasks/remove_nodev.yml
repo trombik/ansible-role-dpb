@@ -1,14 +1,15 @@
 ---
 
 - name: Get mount point of dpb_proot_chroot
-  shell: "df -P {{ dpb_proot_chroot | quote }} | tail -n1 | awk '{ print $6 }'"
+  shell: df -P {{ dpb_proot_chroot | quote }} | tail -n1 | awk '{ print $6 }'
   changed_when: false
   register: register_proot_mount_point
 
 - set_fact:
     proot_mount_point: "{{ register_proot_mount_point.stdout }}"
 
-- assert:
+- name: Assert that proot_mount_point is defined
+  assert:
     msg: "[BUG] proot_mount_point: is empty"
     that:
       - proot_mount_point is defined
@@ -21,7 +22,8 @@
   register: register_mount_options
   changed_when: false
 
-- set_fact:
+- name: Set dpb_mount_device_uuid
+  set_fact:
     # by default, fstab(5) uses disk UUID, instead of device name. to set mount
     # option, disk UUID
     dpb_mount_device_uuid: "{{ ansible_mounts | selectattr('mount', 'equalto', proot_mount_point) | map(attribute='device') | first }}"
@@ -55,7 +57,8 @@
   register: register_mount_options
   changed_when: false
 
-- assert:
+- name: Assert that nodev option has been removed
+  assert:
     # this time, proot_mount_point should be mounted without "nodev"
     that:
       - register_mount_options.stdout.find('nodev') < 0
